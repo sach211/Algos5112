@@ -20,7 +20,6 @@ def shortest_path(graph, source, target):
     explored_nodes = [(source,0)]
     prev_node = {}
     
-    xxx = -1
     init_neighbours = graph.get_neighbors(source)
     for x in init_neighbours:
         prev_node[x[0]] = (source, x[1])
