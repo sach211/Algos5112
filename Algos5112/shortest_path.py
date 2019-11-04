@@ -25,31 +25,27 @@ def shortest_path(graph, source, target):
     for x in init_neighbours:
         prev_node[x[0]] = (source, x[1])
     
-    while xxx <= 10 and not node_present(target, explored_nodes):
-        xxx += 1
+    while not node_present(target, explored_nodes):
         nn = get_cur_neighbors(prev_node)
         nn.sort(key=lambda tup:tup[1])
         
-        print("\n Round " + str(xxx)) 
-        print(prev_node)
-        print(explored_nodes)
-        
+        current_node = None
         for i in nn:
             if i not in explored_nodes:
                 current_node = i 
                 explored_nodes.append(current_node)
                 break
+        if current_node != None:
+            neighbors_current = graph.get_neighbors(current_node[0])
     
-        neighbors_current = graph.get_neighbors(current_node[0])
-    
-        for i in neighbors_current:
-            if i[0] in prev_node:    
-                ew = prev_node[i[0]][1]
+            for i in neighbors_current:
+                if i[0] in prev_node:    
+                    ew = prev_node[i[0]][1]
                     
-                if (i[1] + current_node[1]) < ew:
+                    if (i[1] + current_node[1]) < ew:
+                        prev_node[i[0]] = (current_node[0], i[1] + current_node[1])
+                else:
                     prev_node[i[0]] = (current_node[0], i[1] + current_node[1])
-            else:
-                prev_node[i[0]] = (current_node[0], i[1] + current_node[1])
                 
     x = target
     path = [target]
