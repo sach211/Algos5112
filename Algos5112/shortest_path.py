@@ -9,19 +9,30 @@ def node_present (node, explored_nodes):
             return True
     return False
 
+def get_cur_neighbors(exp_dict):
+    nn = []
+    for k in exp_dict:
+        nn.append((k, exp_dict[k][1]))
+    return nn
+
 def shortest_path(graph, source, target):
     
     explored_nodes = [(source,0)]
     prev_node = {}
     
+    xxx = -1
     init_neighbours = graph.get_neighbors(source)
     for x in init_neighbours:
-        prev_node[x[0]] = source
+        prev_node[x[0]] = (source, x[1])
     
-    while not node_present(target, explored_nodes):
-    
-        nn = graph.get_neighbors(source)
+    while xxx <= 10 and not node_present(target, explored_nodes):
+        xxx += 1
+        nn = get_cur_neighbors(prev_node)
         nn.sort(key=lambda tup:tup[1])
+        
+        print("\n Round " + str(xxx)) 
+        print(prev_node)
+        print(explored_nodes)
         
         for i in nn:
             if i not in explored_nodes:
@@ -32,28 +43,22 @@ def shortest_path(graph, source, target):
         neighbors_current = graph.get_neighbors(current_node[0])
     
         for i in neighbors_current:
-            if graph.has_edge(source, i[0]):    
-                ew = 0
-                for ew_pair in nn:
-                    if ew_pair[0] == i[0]:
-                        ew = ew_pair[1]
-                        break
+            if i[0] in prev_node:    
+                ew = prev_node[i[0]][1]
                     
                 if (i[1] + current_node[1]) < ew:
-                    graph.add_edge(source, i[0], i[1] + current_node[1])
-                    prev_node[i[0]] = current_node[0]
+                    prev_node[i[0]] = (current_node[0], i[1] + current_node[1])
             else:
-                graph.add_edge(source, i[0], i[1] + current_node[1])
-                prev_node[i[0]] = current_node[0]
+                prev_node[i[0]] = (current_node[0], i[1] + current_node[1])
                 
     x = target
     path = [target]
     while x != source:
-        x = prev_node[x]
+        x = prev_node[x][0]
         path.append(x)
         
     path = path[::-1]
-    return (path, explored_nodes[-1][1])
+    return (path, prev_node[target][1])
             
                 
      
