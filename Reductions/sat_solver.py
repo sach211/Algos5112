@@ -29,9 +29,34 @@ def to_cnf_gadget(s):
 # you may also use the is_symbol() helper function to determine if you have encountered a propositional symbol
 def parse_iff_implies(s):
     # TODO: write your code here, change the return values accordingly
+    s = rec_parse_iff_implies(s)   
+    print(s)
+    return Expr(s.op, s.args)
+
+def rec_parse_iff_implies(s):
+    exp = Expr(s.op, s.args)
+    if len(exp.args[0]) < 2:
+        return s
     
+    argA, argB = exp.args[0][0], exp.args[0][1]
+    expA = rec_parse_iff_implies(argA)
     
-    return Expr(s.op, *args)
+    expB = rec_parse_iff_implies(argB)
+    
+    if exp.op == "==>":
+        expA = expA.__invert__()
+        expA = expA.__or__(expB)
+        
+    elif exp.op == "<==>":
+        expAA = Expr("==>", expA, expB)
+        expAA = rec_parse_iff_implies(expAA)
+        expBB = Expr("==>", expB, expA)
+        expBB = rec_parse_iff_implies(expBB)
+        expAA = expAA.__and__(expBB)
+        expA = expAA
+    
+    return expA
+    
 
 # ______________________________________________________________________________
 # STEP2: if there is NOT(~), move it inside, change the operations accordingly.
@@ -49,7 +74,19 @@ def parse_iff_implies(s):
 # you may also use the is_symbol() helper function to determine if you have encountered a propositional symbol
 def deMorgansLaw(s):
     # TODO: write your code here, change the return values accordingly
+    #print(expr(s.args[0][0]).args)
+    #print(s.op)
     return Expr(s.op, *args)
+
+def rec_deMorgansLaw(s):
+    exp = Expr(s.op, s.args)
+    
+    if len(exp.args[0] == 0):
+        return s
+    
+    if len(exp.args[0]) == 1:
+        expA = expr(exp.args[0][0])             
+        
 
 # ______________________________________________________________________________
 # STEP3: use Distibutive Law to distribute and('&') over or('|')
@@ -96,7 +133,8 @@ if __name__ == "__main__":
     P, Q, R = expr('P, Q, R')
 
 # Shows alternative ways to write your expression
-    assert SAT_solver(A | '<=>' | B) == {A: True, B: True}
+    #assert SAT_solver(~ (A | ~(B & C))) == {A: True, B: True}
+    assert SAT_solver((A | '<==>' | B) | '==>' | C) == {A: True, B: True}
     assert SAT_solver(expr('A <=> B')) == {A: True, B: True}
 
 # Some unsatisfiable examples
