@@ -14,10 +14,15 @@ def to_cnf_gadget(s):
     s = expr(s)
     if isinstance(s, str):
         s = expr(s)
+    print(s)
     step1 = parse_iff_implies(s)
-    #print(step1)# Steps 1
+    print(step1)# Steps 1
     step2 = deMorgansLaw(step1)  # Step 2
-    return distibutiveLaw(step2)  # Step 3
+    print(step2)
+    step3 = distibutiveLaw(step2)  # Step 3
+    print(step3)
+    print("\n")
+    return step3
 
 # ______________________________________________________________________________
 # STEP1: if s has IFF or IMPLIES, parse them
@@ -36,7 +41,13 @@ def parse_iff_implies(s):
 def rec_parse_iff_implies(exp):
     #exp = Expr(s.op, s.args[0], s.args[1])
     #s = exp
+    print("\nHey")
+    print(exp)
+    print(exp.op)
+    print(exp.args)
+    
     if len(exp.args) < 2:
+        print("return0")
         return exp
     
     argA, argB = exp.args[0], exp.args[1]
@@ -48,13 +59,16 @@ def rec_parse_iff_implies(exp):
         expA = expA.__invert__()
         expA = expA.__or__(expB)
         
-    elif exp.op == "<==>":
+    elif exp.op == "<=>":
         expAA = Expr("==>", expA, expB)
         expAA = rec_parse_iff_implies(expAA)
         expBB = Expr("==>", expB, expA)
         expBB = rec_parse_iff_implies(expBB)
         expAA = expAA.__and__(expBB)
         expA = expAA
+        
+    else:
+        expA = exp
     
     return expA
     
@@ -78,17 +92,11 @@ def deMorgansLaw(s):
     #print(expr(s.args[0][0]).args)
     #print(s.op)
     s = rec_deMorgansLaw(s)
-    print(s)
+
     return s
 
 def rec_deMorgansLaw(exp): 
-    print("\nBegin!")
-    print(exp)
-    print(exp.op)
-    print(exp.args)
     if len(exp.args) == 0:
-        print("\nReturn: ")
-        print(exp)
         return exp
     
     if exp.op == '~':
@@ -122,8 +130,6 @@ def rec_deMorgansLaw(exp):
         expB = rec_deMorgansLaw(argB)
         exp = Expr(exp.op, expA, expB)
     
-    print("\nReturn: ")    
-    print(exp)
     return exp             
         
 
@@ -136,11 +142,89 @@ def rec_deMorgansLaw(exp):
 ((A | C) & (B | C))
 """
 
+def distibutiveLaw(s):
+    s = rec_distibutiveLaw(s)
+    return s
+
+def rec_distibutiveLaw(exp):
+    if len(exp.args) < 2:
+        return exp
+    
+    argA, argB = exp.args[0], exp.args[1]
+    expA = rec_distibutiveLaw(argA)
+    expB = rec_distibutiveLaw(argB)
+    
+    if exp.op == '&':
+        exp = Expr(exp.op, expA, expB)
+        
+    else:
+        if len(expA.args) > 1:
+            expAA = Expr('|', expA.args[0], expB)
+            expBB = Expr('|', expA.args[1], expB)
+            exp = Expr('&', expAA, expBB)
+        elif len(expB.args) > 1:
+            expAA = Expr('|', expA, expB.args[0])
+            expBB = Expr('|', expA, expB.args[1])
+            exp = Expr('&', expAA, expBB)
+            
+            
+    #print(exp)
+    return exp
+    
+    
 # TODO: apply distibutiveLaw so as to return an equivalent expression in CNF form
 # Hint: you may use the associate() helper function to help you flatten the expression
-def distibutiveLaw(s):
+"""def distibutiveLaw(s):
     # TODO: write your code here, change the return values accordingly
-    return Expr(s.op, *args)
+   
+    print("begin! yujuuuuu")
+    if len(s.args) == 0:
+        print("\nReturn: ")
+        print(s)
+        return s
+    
+    s = associate("|", s.args)
+    arguments = s.args
+    op = s.op
+    
+    beginInd = 1
+    expX = arguments[0]
+    if len(arguments[0].args) > 1:
+        beginInd = beginInd + 1
+        argA = arguments[0]
+        argB = arguments[1]
+        
+        argA_split = argA.args
+        expX = Expr("|", argA_split[0], argB)
+        expX = distibutiveLaw(expX)
+        for i in range(1,len(argA_split)):
+            expTemp = Expr("|", argA_split[i], argB)
+            expTemp = distibutiveLaw(expTemp)
+            expX = Expr("&", expX, expTemp)
+            expX = associate("&", expX.args)
+  
+    for index in range(beginInd,len(arguments)):
+        if len(arguments[index].args) > 1:
+            argA = arguments[index]
+                            
+            argA_split = argA.args
+            expX = Expr("|", argA_split[0], argB)
+            expX = distibutiveLaw(expX)
+            for i in range(1,len(argA_split)):
+                expTemp = Expr("|", argA_split[i], argB)
+                expTemp = distibutiveLaw(expTemp)
+                expX = Expr("&", expX, expTemp)
+                expX = associate("&", expX.args)
+ 
+    if op == "|":
+        len_args = []
+        for i in args:
+            len_args.append(len(i))
+        if len(len_args.unique()) == 1:
+            return s
+        else:
+            if len_args[0] != 1 and len_args[1] == 1:
+    return Expr(s.op, *args)"""
 
 
 # ______________________________________________________________________________
@@ -172,9 +256,13 @@ if __name__ == "__main__":
     P, Q, R = expr('P, Q, R')
 
 # Shows alternative ways to write your expression
-    assert SAT_solver(~(~ (~( ~B)))) == {A: True, B: True}
-    assert SAT_solver(~ (A | ~(B & C))) == {A: True, B: True}
-    assert SAT_solver((A | '<==>' | B) | '==>' | C) == {A: True, B: True}
+    assert SAT_solver(~(~ (~( ~B)))) == {B: True}
+    assert SAT_solver(~ (A | ~(B & C))) == {A: False, B: True, C: True}
+    
+    #assert SAT_solver(~A | B | C) == {A: True, B: True}
+    
+    #CHECKassert SAT_solver((A | '<=>' | B) | '==>' | C) == {A: True, B: False}
+    assert SAT_solver(A | '<=>' | B) == {A: True, B: True}
     assert SAT_solver(expr('A <=> B')) == {A: True, B: True}
 
 # Some unsatisfiable examples
