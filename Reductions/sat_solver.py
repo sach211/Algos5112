@@ -14,7 +14,8 @@ def to_cnf_gadget(s):
     s = expr(s)
     if isinstance(s, str):
         s = expr(s)
-    step1 = parse_iff_implies(s)  # Steps 1
+    step1 = parse_iff_implies(s)
+    #print(step1)# Steps 1
     step2 = deMorgansLaw(step1)  # Step 2
     return distibutiveLaw(step2)  # Step 3
 
@@ -29,16 +30,16 @@ def to_cnf_gadget(s):
 # you may also use the is_symbol() helper function to determine if you have encountered a propositional symbol
 def parse_iff_implies(s):
     # TODO: write your code here, change the return values accordingly
-    s = rec_parse_iff_implies(s)   
-    print(s)
-    return Expr(s.op, s.args)
+    s = rec_parse_iff_implies(s) 
+    return s
 
-def rec_parse_iff_implies(s):
-    exp = Expr(s.op, s.args)
-    if len(exp.args[0]) < 2:
-        return s
+def rec_parse_iff_implies(exp):
+    #exp = Expr(s.op, s.args[0], s.args[1])
+    #s = exp
+    if len(exp.args) < 2:
+        return exp
     
-    argA, argB = exp.args[0][0], exp.args[0][1]
+    argA, argB = exp.args[0], exp.args[1]
     expA = rec_parse_iff_implies(argA)
     
     expB = rec_parse_iff_implies(argB)
@@ -76,16 +77,54 @@ def deMorgansLaw(s):
     # TODO: write your code here, change the return values accordingly
     #print(expr(s.args[0][0]).args)
     #print(s.op)
-    return Expr(s.op, *args)
+    s = rec_deMorgansLaw(s)
+    print(s)
+    return s
 
-def rec_deMorgansLaw(s):
-    exp = Expr(s.op, s.args)
+def rec_deMorgansLaw(exp): 
+    print("\nBegin!")
+    print(exp)
+    print(exp.op)
+    print(exp.args)
+    if len(exp.args) == 0:
+        print("\nReturn: ")
+        print(exp)
+        return exp
     
-    if len(exp.args[0] == 0):
-        return s
+    if exp.op == '~':
+        current = rec_deMorgansLaw(exp.args[0])
+        if current.op == '~':
+            exp = current.args[0]
+        elif not is_symbol(current.op):
+            #print("\nHERE")
+            #exp = expA.__invert__()
+            #print(exp)
+            #exp = expA
+        #else:
+            op = current.op
+            argA = current.args[0]
+            argB = current.args[1]
+            argA = argA.__invert__()
+            expA = rec_deMorgansLaw(argA)
+            argB = argB.__invert__()
+            expB = rec_deMorgansLaw(argB)
+            if op == '&':
+                op = '|'
+            elif op == '|':
+                op = '&'
+            exp = Expr(op, expA, expB)
+        else:
+            exp = Expr(exp.op, current)
     
-    if len(exp.args[0]) == 1:
-        expA = expr(exp.args[0][0])             
+    else:
+        argA, argB = exp.args[0], exp.args[1]
+        expA = rec_deMorgansLaw(argA)
+        expB = rec_deMorgansLaw(argB)
+        exp = Expr(exp.op, expA, expB)
+    
+    print("\nReturn: ")    
+    print(exp)
+    return exp             
         
 
 # ______________________________________________________________________________
@@ -133,7 +172,8 @@ if __name__ == "__main__":
     P, Q, R = expr('P, Q, R')
 
 # Shows alternative ways to write your expression
-    #assert SAT_solver(~ (A | ~(B & C))) == {A: True, B: True}
+    assert SAT_solver(~(~ (~( ~B)))) == {A: True, B: True}
+    assert SAT_solver(~ (A | ~(B & C))) == {A: True, B: True}
     assert SAT_solver((A | '<==>' | B) | '==>' | C) == {A: True, B: True}
     assert SAT_solver(expr('A <=> B')) == {A: True, B: True}
 
